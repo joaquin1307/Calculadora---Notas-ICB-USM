@@ -4,7 +4,7 @@ Calculadora web para llevar el control de tus notas durante la carrera. Te permi
 
 Incluye los 10 semestres de la malla oficial de la carrera, usa la escala de evaluación de la USM (0–100, aprobación con 54,5) y tus notas se guardan solas en tu navegador, sin necesidad de crear cuenta ni instalar nada.
 
-🔗 **Link para usarla:** *(reemplaza esto con tu URL de GitHub Pages, ej. `https://tu-usuario.github.io/nombre-del-repo/`)*
+🔗 **Link para usarla: https://joaquin1307.github.io/Calculadora---Notas-ICB-USM
 
 ---
 
