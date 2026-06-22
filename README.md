@@ -59,4 +59,6 @@ Tus datos se guardan automáticamente en el **almacenamiento local de tu navegad
 
 ## ⚠️ Importante
 
-Esta calculadora es una **herramienta de apoyo no oficial**, hecha por estudiantes para estudiantes. Los nombres de los ramos están tomados de la malla publicada por la USM, pero ante cualquier duda sobre ponderaciones, fechas o reglamento, siempre prevalece lo que indique tu profesor y la información oficial de la universidad.
+Esta calculadora es una **herramienta de apoyo no oficial**, hecha por un estudiante para estudiantes. Los nombres de los ramos están tomados de la malla publicada por la USM, pero ante cualquier duda sobre ponderaciones, fechas o reglamento, siempre prevalece lo que indique tu profesor y la información oficial de la universidad. Cualquier comentario de mejora o duda sobre el uso de la pagina escribir a mi correo
+jmartinezla@usm.cl
+
