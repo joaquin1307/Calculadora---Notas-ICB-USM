@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Notas — Ing. Civil Biotecnología USM</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --verde: #0F6E56; --verde-bg: #E1F5EE;
+    --rojo: #A32D2D; --rojo-bg: #FCEBEB;
+    --amarillo: #BA7517; --amarillo-bg: #FAEEDA;
+    --azul: #1D4ED8; --azul-bg: #EFF6FF;
+    --morado: #6D28D9; --morado-bg: #F5F3FF;
+    --teal: #047857; --teal-bg: #ECFDF5;
+    --naranja: #C2410C; --naranja-bg: #FFF7ED;
+    --gris-bg: #F5F4F0; --gris-borde: #D3D1C7;
+    --texto: #1a1a18; --texto-suave: #5F5E5A;
+    --blanco: #ffffff; --radio: 8px; --radio-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; color: var(--texto); background: var(--gris-bg); min-height: 100vh; }
+  .header { background: #0F2E24; color: #fff; padding: 1.25rem 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 2px; }
+  .header p { font-size: 12px; color: #9FE1CB; }
+  .header-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 3px 10px; border-radius: 100px; background: rgba(255,255,255,0.1); color: #fff; }
+  .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--gris-borde); border-bottom: 1px solid var(--gris-borde); }
+  .stat-card { background: var(--blanco); padding: 12px 16px; text-align: center; }
+  .stat-label { font-size: 11px; color: var(--texto-suave); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; }
+  .stat-value.v-verde { color: var(--verde); } .stat-value.v-amarillo { color: var(--amarillo); }
+  .stat-value.v-rojo { color: var(--rojo); } .stat-value.v-neutro { color: var(--texto); }
+  .tabs-container { background: var(--blanco); border-bottom: 1px solid var(--gris-borde); padding: 0 1rem; overflow-x: auto; white-space: nowrap; }
+  .tabs-inner { display: inline-flex; gap: 2px; }
+  .tab-btn { padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--texto-suave); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+  .tab-btn:hover { color: var(--texto); }
+  .tab-btn.activo { color: #0F2E24; border-bottom-color: #0F2E24; }
+  .content { padding: 1.25rem 1.5rem; max-width: 960px; margin: 0 auto; }
+  .sem-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  .sem-title { font-size: 15px; font-weight: 600; }
+  .sem-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 100px; font-weight: 500; }
+  .pill-verde { background: var(--verde-bg); color: var(--verde); }
+  .pill-rojo { background: var(--rojo-bg); color: var(--rojo); }
+  .pill-gris { background: var(--gris-bg); color: var(--texto-suave); border: 1px solid var(--gris-borde); }
+  .tabla-card { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio-lg); overflow: hidden; margin-bottom: 1.5rem; }
+  .tabla-ramos { width: 100%; border-collapse: collapse; }
+  .tabla-ramos thead th { text-align: left; font-size: 11px; font-weight: 500; color: var(--texto-suave); padding: 6px 12px; border-bottom: 1px solid var(--gris-borde); background: var(--gris-bg); }
+  .tabla-ramos thead th.c { text-align: center; }
+  .tabla-ramos tbody tr { border-bottom: 1px solid var(--gris-borde); }
+  .tabla-ramos tbody tr:last-child { border-bottom: none; }
+  .tabla-ramos tbody tr:hover { background: #fafaf8; }
+  .tabla-ramos td { padding: 10px 12px; vertical-align: middle; }
+  .ramo-nombre { font-size: 13px; font-weight: 500; }
+  .ramo-sigla { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
+  .nota-display { display: inline-flex; align-items: center; justify-content: center; width: 76px; padding: 6px 8px; border-radius: var(--radio); font-size: 14px; font-weight: 600; text-align: center; border: 1px solid var(--gris-borde); }
+  .nota-display.ap { border-color: var(--verde); color: var(--verde); background: var(--verde-bg); }
+  .nota-display.rp { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-bg); }
+  .nota-display.parcial { border-color: var(--amarillo); color: var(--amarillo); background: var(--amarillo-bg); opacity: 0.85; }
+  .nota-input { width: 76px; padding: 6px 8px; border: 1px solid var(--gris-borde); border-radius: var(--radio); font-size: 14px; font-weight: 600; text-align: center; background: var(--blanco); color: var(--texto); }
+  .nota-input:focus { outline: none; border-color: #0F2E24; }
+  .nota-input.ap { border-color: var(--verde); color: var(--verde); background: var(--verde-bg); }
+  .nota-input.rp { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-bg); }
+  .badge-estado { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; min-width: 38px; text-align: center; }
+  .badge-ap { background: var(--verde-bg); color: var(--verde); }
+  .badge-rp { background: var(--rojo-bg); color: var(--rojo); }
+  .badge-nd { background: var(--gris-bg); color: var(--texto-suave); border: 1px solid var(--gris-borde); }
+  .necesita { font-size: 13px; font-weight: 600; text-align: right; }
+  .nec-ok { color: var(--verde); } .nec-facil { color: var(--verde); }
+  .nec-medio { color: var(--amarillo); } .nec-dificil { color: var(--rojo); }
+  .nec-imposible { color: var(--rojo); font-size: 11px; }
+  .nec-nd { color: var(--texto-suave); font-size: 12px; font-weight: 400; }
+  .pond-section { margin-top: 1.5rem; background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio-lg); overflow: hidden; }
+  .pond-section-header { padding: 12px 16px; border-bottom: 1px solid var(--gris-borde); }
+  .pond-section-header h3 { font-size: 13px; font-weight: 600; }
+  .pond-section-header p { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+  .pond-ramo { border-bottom: 1px solid var(--gris-borde); overflow: hidden; }
+  .pond-ramo:last-child { border-bottom: none; }
+  .pond-ramo-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; background: var(--blanco); }
+  .pond-ramo-header:hover { background: #fafaf8; }
+  .pond-ramo-title { font-size: 13px; font-weight: 500; }
+  .pond-ramo-subtitle { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
+  .chevron { font-size: 12px; color: var(--texto-suave); }
+  .chevron.abierto { transform: rotate(180deg); }
+  .pond-body { display: none; padding: 14px 16px; background: var(--gris-bg); }
+  .pond-body.abierto { display: block; }
+  .sec-bloque { padding: 12px; border-radius: var(--radio); margin-bottom: 8px; }
+  .sec-bloque-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+  .sec-bloque-titulo { display: flex; align-items: center; gap: 8px; }
+  .toggle-btn { width: 36px; height: 20px; border-radius: 100px; border: none; cursor: pointer; position: relative; flex-shrink: 0; }
+  .toggle-btn span { position: absolute; top: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; display: block; }
+  .item-grid { display: grid; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .item-input { padding: 5px 7px; border: 1px solid var(--gris-borde); border-radius: 6px; font-size: 12px; background: var(--blanco); color: var(--texto); }
+  .item-input:focus { outline: none; border-color: #0F2E24; }
+  .item-input.nota-val { font-weight: 600; font-size: 13px; text-align: center; }
+  .btn-quitar { width: 26px; height: 26px; border: 1px solid var(--gris-borde); border-radius: 6px; background: var(--blanco); cursor: pointer; color: var(--rojo); font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .btn-quitar:hover { background: var(--rojo-bg); }
+  .btn-agregar { padding: 4px 10px; font-size: 12px; border: 1px solid; border-radius: 6px; background: var(--blanco); cursor: pointer; }
+  .nota-calc-bar { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--gris-borde); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .nc-pill { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 100px; }
+  .nc-ap { background: var(--verde-bg); color: var(--verde); }
+  .nc-rp { background: var(--rojo-bg); color: var(--rojo); }
+  .nc-parcial { background: var(--amarillo-bg); color: var(--amarillo); }
+  .nc-nd { background: var(--gris-bg); color: var(--texto-suave); }
+  .global-bloque { margin-top: 10px; padding: 12px; border: 1px solid #D97706; border-radius: var(--radio); background: #FFFBEB; }
+  .global-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .global-inputs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .global-nota-input { width: 80px; padding: 6px 8px; border: 1px solid var(--gris-borde); border-radius: var(--radio); font-size: 14px; font-weight: 600; text-align: center; background: var(--blanco); }
+  .peso-input { width: 52px; padding: 4px 6px; border: 1px solid var(--gris-borde); border-radius: 6px; font-size: 12px; text-align: center; background: var(--blanco); }
+  .resumen-row { display: grid; grid-template-columns: 90px 1fr 70px 90px 80px; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gris-borde); }
+  .resumen-row:last-child { border-bottom: none; }
+  .prog-bar { height: 8px; background: var(--gris-bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--gris-borde); }
+  .prog-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+  .prog-verde { background: var(--verde); } .prog-amarillo { background: #EF9F27; } .prog-rojo { background: #E24B4A; }
+  .btn-ver { font-size: 12px; padding: 4px 10px; border: 1px solid var(--gris-borde); border-radius: var(--radio); background: var(--blanco); cursor: pointer; }
+  .btn-ver:hover { background: var(--gris-bg); }
+  .info-box { margin-top: 1.5rem; padding: 14px 16px; background: #E6F1FB; border-radius: var(--radio-lg); border: 1px solid #B5D4F4; }
+  .info-box h4 { font-size: 13px; font-weight: 600; color: #0C447C; margin-bottom: 6px; }
+  .info-box ul { list-style: none; font-size: 12px; color: #185FA5; line-height: 1.8; }
+  .info-box ul li::before { content: "•  "; }
+  @media (max-width: 600px) {
+    .resumen-row { grid-template-columns: 60px 1fr 50px 70px; }
+    .resumen-row .btn-ver { display: none; }
+    .content { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Calculadora de Notas</h1>
+    <p>Ing. Civil en Biotecnología · UTFSM</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span id="save-indicator" style="font-size:11px;color:#9FE1CB;opacity:0;transition:opacity 0.3s;">💾 Guardado en este navegador</span>
+    <div class="header-chips">
+      <span class="chip">Semestres a tu medida</span>
+      <span class="chip">Aprobación: 54,5</span>
+      <span class="chip">Escala 0–100</span>
+    </div>
+    <button onclick="borrarDatosGuardados()" title="Borrar todos tus semestres, ramos y notas guardadas en este navegador"
+      style="font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#E8C4C4;cursor:pointer;">
+      🗑 Borrar mis datos
+    </button>
+  </div>
+</div>
+
+<div style="background:#FFFBEB;border-bottom:1px solid #FCD34D;padding:6px 16px;font-size:11.5px;color:#92400E;text-align:center;">
+  Tus semestres, ramos y notas se guardan automáticamente en <strong>este navegador</strong> (no se comparten con nadie más ni se suben a ningún servidor). Si entras desde otro computador o navegador, no los verás ahí.
+</div>
+
+<div class="stats-bar" id="stats-bar"></div>
+<div class="tabs-container"><div class="tabs-inner" id="tabs-inner"></div></div>
+<div class="content" id="content"></div>
+
+<script>
+const NOTA_MIN = 54.5;
+
+// ─────────────────────────────────────────────
+//  BANCO DE RAMOS DISPONIBLES
+//  Catálogo de referencia (no es la malla "fija" de nadie). El usuario
+//  arma sus propios semestres eligiendo ramos de aquí, o agregando
+//  ramos personalizados que no estén en la lista.
+// ─────────────────────────────────────────────
+const BANCO_RAMOS = [
+  { sigla: "HXW066", nombre: "COMUNICACIÓN EFECTIVA EN ESPAÑOL INGLÉS I", cred: 3 },
+  { sigla: "EFI200", nombre: "EDUCACIÓN FÍSICA I", cred: 2 },
+  { sigla: "FIS100", nombre: "INTRODUCCION A LA FISICA", cred: 6 },
+  { sigla: "MAT070", nombre: "INTRODUCCIÓN AL CÁLCULO", cred: 6 },
+  { sigla: "IWG400", nombre: "PROYECTO INICIAL", cred: 7 },
+  { sigla: "MAT060", nombre: "ÁLGEBRA Y GEOMETRÍA", cred: 6 },
+  { sigla: "HXW007", nombre: "COMUNICACIÓN EFECTIVA EN ESPAÑOL INGLÉS II", cred: 3 },
+  { sigla: "MAT071", nombre: "CÁLCULO EN UNA VARIABLE", cred: 6 },
+  { sigla: "EFI201", nombre: "EDUCACIÓN FÍSICA II", cred: 2 },
+  { sigla: "FIS11125", nombre: "FÍSICA GENERAL MECÁNICA", cred: 6 },
+  { sigla: "INF129", nombre: "INTRODUCCIÓN A LA PROGRAMACIÓN", cred: 7 },
+  { sigla: "MAT061", nombre: "ÁLGEBRA LINEAL", cred: 6 },
+  { sigla: "HMN70625", nombre: "ANÁLISIS CRÍTICO DE TEXTO", cred: 3 },
+  { sigla: "BIO20225", nombre: "BIOLOGÍA CELULAR", cred: 6 },
+  { sigla: "FIS13125", nombre: "CALOR Y ONDAS", cred: 6 },
+  { sigla: "MAT00325", nombre: "ECUACIONES DIFERENCIALES ELEMENTALES", cred: 5 },
+  { sigla: "BIO20125", nombre: "INTRODUCCIÓN PARA LA BIOTECNOLOGÍA", cred: 4 },
+  { sigla: "QUI70125", nombre: "QUÍMICA PARA INGENIERÍA", cred: 6 },
+  { sigla: "IQA70325", nombre: "BALANCE DE MATERIA Y ENERGÍA", cred: 5 },
+  { sigla: "HMN70725", nombre: "COMUNICACIÓN EFECTIVA EN ESPAÑOL INGLÉS III", cred: 3 },
+  { sigla: "MAT00225", nombre: "CÁLCULO EN VARIAS VARIABLES", cred: 6 },
+  { sigla: "FIS12125", nombre: "ELECTRICIDAD Y MAGNETISMO", cred: 6 },
+  { sigla: "QUI70325", nombre: "QUÍMICA ORGÁNICA", cred: 6 },
+  { sigla: "BIO20325", nombre: "TALLER APLICADO EN BIOTECNOLOGÍA", cred: 4 },
+  { sigla: "ICS70325", nombre: "ADMINISTRACIÓN Y SOSTENIBILIDAD ORGANIZACIONAL", cred: 4 },
+  { sigla: "BIO30525", nombre: "BIOQUÍMICA", cred: 7 },
+  { sigla: "BIO30425", nombre: "OPERACIONES UNITARIAS I", cred: 6 },
+  { sigla: "BIO30625", nombre: "QUÍMICA ANÁLITICA Y ANÁLISIS INSTRUMENTAL", cred: 7 },
+  { sigla: "BIO33026", nombre: "TERMODINÁMICA PARA PROCESOS BIOTECNOLÓGICO", cred: 6 },
+  { sigla: "BIO30725", nombre: "BIOLOGÍA MOLECULAR", cred: 8 },
+  { sigla: "HMN70925", nombre: "COMUNICACIÓN EFECTIVA EN ESPAÑOL INGLÉS IV", cred: 3 },
+  { sigla: "IQA70725", nombre: "ESTADISTÍCA Y DISEÑO EXPERIMENTOS", cred: 6 },
+  { sigla: "IND73225", nombre: "INGENIERÍA ECONÓMICA", cred: 4 },
+  { sigla: "BIO30825", nombre: "OPERACIONES UNITARIAS II", cred: 6 },
+  { sigla: "HMN70825", nombre: "PRÁCTICA EN ACCIÓN COMUNITARIA", cred: 3 },
+  { sigla: "BIO41125", nombre: "BIOCATÁLISIS Y BIORREACTORES", cred: 7 },
+  { sigla: "BIO40925", nombre: "BIOINFORMÁTICA", cred: 6 },
+  { sigla: "BIO41225", nombre: "EVALUACIÓN DE PROYECTOS", cred: 6 },
+  { sigla: "HMN71028", nombre: "INGLÉS DISCIPLINAR", cred: 3 },
+  { sigla: "BIO41025", nombre: "MICROBIOLOGÍA", cred: 7 },
+  { sigla: "BIO41725", nombre: "BIOINFORMÁTICA Y MÉTODOS COMPUTACIONALES", cred: 6 },
+  { sigla: "BIO6132", nombre: "ELECTIVO", cred: 5 },
+  { sigla: "BIO41425", nombre: "GESTIÓN DE LA INNOVACIÓN PARA BIONEGOCIOS", cred: 5 },
+  { sigla: "BIO41525", nombre: "MICROBIOLOGIA INDUSTRIAL", cred: 6 },
+  { sigla: "BIO41825", nombre: "PROYECTO BIOTECNOLOGÍA", cred: 6 },
+  { sigla: "BIO41625", nombre: "SEMINARIO DE BIOTECNOLOGÍA", cred: 3 },
+  { sigla: "BIO52425", nombre: "BIOLOGÍA COMPUTACIONAL", cred: 4 },
+  { sigla: "BIO61925", nombre: "ELECTIVO", cred: 4 },
+  { sigla: "BIO62125", nombre: "ELECTIVO DISCIPLINAR I", cred: 3 },
+  { sigla: "BIO62225", nombre: "ELECTIVO DISCIPLINAR II", cred: 3 },
+  { sigla: "BIO52025", nombre: "GESTIÓN DEL EMPRENDIMIENTO PARA BIONEGOCIOS", cred: 3 },
+  { sigla: "BIO52325", nombre: "GESTIÓN INTEGRAL DE LA PRODUCCIÓN", cred: 3 },
+  { sigla: "BIO52725", nombre: "ACTIVIDAD DE TITULACIÓN", cred: 15 },
+  { sigla: "BIO62625", nombre: "ELECTIVO COMPLEMENTARIO DE TITULACIÓN", cred: 9 },
+  { sigla: "BIO62525", nombre: "ELECTIVO DISCIPLINAR III", cred: 5 },
+];
+
+// Índice rápido sigla -> datos del banco
+const BANCO_POR_SIGLA = {};
+BANCO_RAMOS.forEach(r => { BANCO_POR_SIGLA[r.sigla] = r; });
+
+// ─────────────────────────────────────────────
+//  MIS SEMESTRES (estado editable por el usuario)
+//  miSemestres = [ { numero: 1, ramos: [{sigla, nombre, cred}, ...] }, ... ]
+//  Empieza vacío: el usuario arma su propia organización agregando
+//  semestres y eligiendo ramos del banco (o escribiendo unos propios).
+// ─────────────────────────────────────────────
+let miSemestres = [
+  { numero: 1, ramos: [] },
+];
+
+// ─────────────────────────────────────────────
+//  ESTRUCTURA DE CONFIG
+//  config[sigla] = {
+//    modo: 'simple' | 'secciones',
+//    notaSimple: '',
+//    secciones: {
+//      certamenes: { activa, peso, items:[{nombre,nota}], descartar },
+//      controles:  { activa, peso, items:[{nombre,nota}], descartar },
+//      laboratorio: {
+//        activa, peso,
+//        subsecciones: {
+//          practicos:  { activa, pesoSub, items:[{nombre,nota}] },
+//          informes:   { activa, pesoSub, items:[{nombre,nota}] },
+//          quizzes:    { activa, pesoSub, items:[{nombre,nota}] },
+//          prueba:     { activa, pesoSub, items:[{nombre,nota}] },
+//          actividad:  { activa, pesoSub, items:[{nombre,nota}] },
+//        }
+//      }
+//    },
+//    global: { activa, nota, pesoGlobal:40, pesoRamo:60 }
+//  }
+// ─────────────────────────────────────────────
+
+let tabActual = 'sem1';
+let expandidos = {};
+let config = {};
+
+function initConfig(sigla) {
+  config[sigla] = {
+    modo: 'simple',
+    notaSimple: '',
+    secciones: {
+      certamenes: { activa: true, peso: 100, items: [{nombre:'Certamen 1',nota:''},{nombre:'Certamen 2',nota:''}], descartar: 0 },
+      controles:  { activa: false, peso: 0, items: [{nombre:'Control 1',nota:''},{nombre:'Control 2',nota:''}], descartar: 0 },
+      tareas:     { activa: false, peso: 0, items: [{nombre:'Tarea 1',nota:''},{nombre:'Tarea 2',nota:''}], descartar: 0 },
+      laboratorio: {
+        activa: false, peso: 0,
+        subsecciones: {
+          practicos: { activa: true,  pesoSub: 100, items: [{nombre:'Práctico 1',nota:''}] },
+          informes:  { activa: false, pesoSub: 0,   items: [{nombre:'Informe 1',nota:''}] },
+          quizzes:   { activa: false, pesoSub: 0,   items: [{nombre:'Quiz 1',nota:''}] },
+          prueba:    { activa: false, pesoSub: 0,   items: [{nombre:'Prueba escrita',nota:''}] },
+          actividad: { activa: false, pesoSub: 0,   items: [{nombre:'Actividad práctica',nota:''}] },
+        }
+      }
+    },
+    global: { activa: false, nota: '', pesoGlobal: 40, pesoRamo: 60 }
+  };
+}
+
+// Crea el config de un ramo si todavía no existe (se llama "al vuelo"
+// cada vez que un ramo se agrega a un semestre, en vez de inicializar
+// todo de antemano según una malla fija como antes).
+function asegurarConfig(sigla) {
+  if (!config[sigla]) initConfig(sigla);
+}
+
+// ─── PERSISTENCIA (localStorage) ──────────────
+//
+// Las notas de cada persona viven SOLO en su propio navegador (no se suben
+// a GitHub ni se comparten entre usuarios). Por eso, al actualizar el HTML
+// en el repositorio, los datos guardados de cada usuario siguen intactos.
+//
+// Usamos un merge profundo en vez de sobreescribir config/expandidos tal
+// cual: así, si en el futuro agregamos una sección nueva (como pasó con
+// "tareas"), una persona que ya tenía datos guardados de ANTES de ese
+// cambio no rompe la calculadora — los campos nuevos se completan con los
+// valores por defecto de initConfig() y los campos viejos se respetan.
+//
+// v2: ahora también guardamos "miSemestres" (la organización de semestres
+// y ramos que cada persona armó a su gusto), además de las notas (config).
+
+const STORAGE_KEY = 'calc_notas_icbt_usm_v2';
+let guardarTimeout = null;
+
+function esObjetoPlano(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+// Fusiona "guardado" (lo que viene de localStorage) sobre "base" (la
+// plantilla recién creada por initConfig). Los arrays se reemplazan
+// completos si existen en "guardado" (porque ahí van las notas reales,
+// no tiene sentido fusionarlos campo a campo); los objetos se fusionan
+// recursivamente para no perder campos nuevos que "guardado" no conozca.
+function fusionarProfundo(base, guardado) {
+  if (!esObjetoPlano(base) || !esObjetoPlano(guardado)) {
+    return guardado !== undefined ? guardado : base;
+  }
+  const resultado = { ...base };
+  for (const key of Object.keys(guardado)) {
+    if (Array.isArray(guardado[key])) {
+      resultado[key] = guardado[key];
+    } else if (esObjetoPlano(guardado[key]) && esObjetoPlano(base[key])) {
+      resultado[key] = fusionarProfundo(base[key], guardado[key]);
+    } else {
+      resultado[key] = guardado[key];
+    }
+  }
+  return resultado;
+}
+
+function cargarDatosGuardados() {
+  let datos = null;
+  try {
+    const crudo = localStorage.getItem(STORAGE_KEY);
+    if (crudo) datos = JSON.parse(crudo);
+  } catch (e) {
+    console.warn('No se pudieron leer los datos guardados:', e);
+    return { ok: false };
+  }
+  if (!datos) return { ok: false };
+
+  // Restaurar la organización de semestres del usuario primero, porque
+  // config se construye en base a qué siglas aparecen ahí.
+  if (Array.isArray(datos.miSemestres) && datos.miSemestres.length > 0) {
+    miSemestres = datos.miSemestres;
+  }
+
+  // Asegurar que cada ramo que el usuario tiene en sus semestres tenga
+  // su config inicializado antes de fusionar las notas guardadas.
+  miSemestres.forEach(s => (s.ramos || []).forEach(r => asegurarConfig(r.sigla)));
+
+  if (esObjetoPlano(datos.config)) {
+    for (const sigla of Object.keys(datos.config)) {
+      asegurarConfig(sigla);
+      config[sigla] = fusionarProfundo(config[sigla], datos.config[sigla]);
+    }
+  }
+  if (esObjetoPlano(datos.expandidos)) {
+    Object.assign(expandidos, datos.expandidos);
+  }
+  if (typeof datos.tabActual === 'string') {
+    tabActual = datos.tabActual;
+  }
+  return { ok: true, fecha: datos.guardadoEn || null };
+}
+
+function guardarDatosAhora() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 2,
+      guardadoEn: new Date().toISOString(),
+      miSemestres,
+      config,
+      expandidos,
+      tabActual,
+    }));
+    mostrarIndicadorGuardado();
+  } catch (e) {
+    console.warn('No se pudieron guardar los datos (¿localStorage lleno o bloqueado?):', e);
+  }
+}
+
+// Debounce: si la persona está escribiendo notas rápido, no queremos
+// escribir en localStorage en cada tecla. Esperamos 400ms de silencio.
+function guardarDatos() {
+  clearTimeout(guardarTimeout);
+  guardarTimeout = setTimeout(guardarDatosAhora, 400);
+}
+
+function mostrarIndicadorGuardado() {
+  const el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.style.opacity = '1';
+  clearTimeout(el._fadeTimeout);
+  el._fadeTimeout = setTimeout(() => { el.style.opacity = '0'; }, 1200);
+}
+
+function borrarDatosGuardados() {
+  if (!confirm('¿Borrar todos tus semestres, ramos y notas guardadas en este navegador? Esta acción no se puede deshacer.')) return;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  config = {};
+  expandidos = {};
+  miSemestres = [{ numero: 1, ramos: [] }];
+  tabActual = 'sem1';
+  renderStats(); renderTabs(); renderContent();
+}
+
+// ─── HELPERS DE CÁLCULO ───────────────────────
+
+function promItems(items, descartar) {
+  const conNota = items.map((it,i) => ({...it,_i:i,n:parseFloat(it.nota)})).filter(it => !isNaN(it.n));
+  if (!conNota.length) return null;
+  const ord = [...conNota].sort((a,b) => a.n - b.n);
+  const descSet = new Set(ord.slice(0, Math.min(descartar, ord.length)).map(d => d._i));
+  const efec = conNota.filter(it => !descSet.has(it._i));
+  if (!efec.length) return null;
+  return efec.reduce((s,it) => s+it.n, 0) / efec.length;
+}
+
+// Igual que promItems, pero los casilleros vacíos cuentan como nota 0
+// en lugar de excluirse del promedio. Solo se usa para el "parcial" visible.
+function promItemsConCero(items, descartar) {
+  if (!items.length) return null;
+  // Las "notas reales" (ignorando vacíos) determinan cuáles son las peores
+  // para el descarte; un casillero vacío nunca es candidato a descartarse,
+  // porque aún no sabemos cuánto va a valer.
+  const conNota = items.map((it,i) => ({...it,_i:i,n:parseFloat(it.nota)})).filter(it => !isNaN(it.n));
+  const ord = [...conNota].sort((a,b) => a.n - b.n);
+  const descSet = new Set(ord.slice(0, Math.min(descartar, ord.length)).map(d => d._i));
+  const efec = items.filter((_,i) => !descSet.has(i));
+  if (!efec.length) return null;
+  const suma = efec.reduce((s,it) => {
+    const n = parseFloat(it.nota);
+    return s + (isNaN(n) ? 0 : n); // pendiente = 0
+  }, 0);
+  return suma / efec.length;
+}
+
+function descartados(items, descartar) {
+  const conNota = items.map((it,i) => ({...it,_i:i,n:parseFloat(it.nota)})).filter(it => !isNaN(it.n));
+  return [...conNota].sort((a,b)=>a.n-b.n).slice(0, Math.min(descartar, conNota.length));
+}
+
+function itemsEfectivos(items, descartar) {
+  const conNota = items.map((it,i) => ({...it,_i:i,n:parseFloat(it.nota)})).filter(it => !isNaN(it.n));
+  const ord = [...conNota].sort((a,b)=>a.n-b.n);
+  const descSet = new Set(ord.slice(0,Math.min(descartar,conNota.length)).map(d=>d._i));
+  return items.filter((_,i)=>!descSet.has(i));
+}
+
+function promLab(lab) {
+  // Promedio ponderado de subsecciones activas del laboratorio
+  const subs = lab.subsecciones;
+  let pesoTot = 0, pond = 0, hayDato = false;
+  for (const k of Object.keys(subs)) {
+    const sub = subs[k];
+    if (!sub.activa) continue;
+    const w = parseFloat(sub.pesoSub) || 0;
+    const p = promItems(sub.items, 0);
+    if (p !== null) { pond += p*w; pesoTot += w; hayDato = true; }
+  }
+  return hayDato && pesoTot > 0 ? pond/pesoTot : null;
+}
+
+// Versión "con cero" de promLab, para el cálculo parcial
+function promLabConCero(lab) {
+  const subs = lab.subsecciones;
+  let pesoTot = 0, pond = 0, hayDato = false;
+  for (const k of Object.keys(subs)) {
+    const sub = subs[k];
+    if (!sub.activa) continue;
+    const w = parseFloat(sub.pesoSub) || 0;
+    const p = promItemsConCero(sub.items, 0);
+    if (p !== null) { pond += p*w; pesoTot += w; hayDato = true; }
+  }
+  return hayDato && pesoTot > 0 ? pond/pesoTot : null;
+}
+
+function labPendientes(lab) {
+  const subs = lab.subsecciones;
+  for (const k of Object.keys(subs)) {
+    const sub = subs[k];
+    if (!sub.activa) continue;
+    if (sub.items.some(it => it.nota==='' || isNaN(parseFloat(it.nota)))) return true;
+  }
+  return false;
+}
+
+function getNotaFinal(sigla) {
+  // Devuelve nota solo si TODO está completo
+  const c = config[sigla];
+  if (!c) return null;
+  if (c.modo==='simple') { const n=parseFloat(c.notaSimple); return isNaN(n)?null:n; }
+
+  const secs = c.secciones;
+  // Verificar pendientes
+  for (const k of ['certamenes','controles','tareas']) {
+    const sec = secs[k]; if (!sec.activa) continue;
+    const ef = itemsEfectivos(sec.items, sec.descartar);
+    if (ef.some(it=>it.nota===''||isNaN(parseFloat(it.nota)))) return null;
+  }
+  if (secs.laboratorio.activa && labPendientes(secs.laboratorio)) return null;
+  if (c.global.activa && (c.global.nota===''||isNaN(parseFloat(c.global.nota)))) return null;
+
+  const promSecs = getPromSeccionesCompleto(sigla);
+  if (promSecs===null) return null;
+
+  if (c.global.activa) {
+    const ng = parseFloat(c.global.nota);
+    const pg = parseFloat(c.global.pesoGlobal)||40;
+    const pr = parseFloat(c.global.pesoRamo)||60;
+    return (ng*pg + promSecs*pr)/(pg+pr);
+  }
+  return promSecs;
+}
+
+function getPromSeccionesCompleto(sigla) {
+  const c = config[sigla];
+  if (!c || c.modo==='simple') return null;
+  const secs = c.secciones;
+  let pesoTot=0, pond=0, hayDato=false;
+  for (const k of ['certamenes','controles','tareas']) {
+    const sec=secs[k]; if (!sec.activa) continue;
+    const w=parseFloat(sec.peso)||0;
+    const p=promItems(sec.items, sec.descartar);
+    if (p!==null) { pond+=p*w; pesoTot+=w; hayDato=true; }
+  }
+  if (secs.laboratorio.activa) {
+    const w=parseFloat(secs.laboratorio.peso)||0;
+    const p=promLab(secs.laboratorio);
+    if (p!==null) { pond+=p*w; pesoTot+=w; hayDato=true; }
+  }
+  return hayDato && pesoTot>0 ? pond/pesoTot : null;
+}
+
+// Igual que getPromSeccionesCompleto, pero cada casillero vacío de cada
+// sección activa cuenta como 0 en lugar de excluirse. Útil para mostrar
+// un "promedio parcial" que ya refleje las notas pendientes como riesgo.
+function getPromSeccionesParcial(sigla) {
+  const c = config[sigla];
+  if (!c || c.modo==='simple') return null;
+  const secs = c.secciones;
+  let pesoTot=0, pond=0, hayDato=false;
+  for (const k of ['certamenes','controles','tareas']) {
+    const sec=secs[k]; if (!sec.activa) continue;
+    const w=parseFloat(sec.peso)||0;
+    const p=promItemsConCero(sec.items, sec.descartar);
+    if (p!==null) { pond+=p*w; pesoTot+=w; hayDato=true; }
+  }
+  if (secs.laboratorio.activa) {
+    const w=parseFloat(secs.laboratorio.peso)||0;
+    const p=promLabConCero(secs.laboratorio);
+    if (p!==null) { pond+=p*w; pesoTot+=w; hayDato=true; }
+  }
+  return hayDato && pesoTot>0 ? pond/pesoTot : null;
+}
+
+function getNotaParcial(sigla) {
+  // Promedio con lo que hay hasta ahora, tratando casilleros vacíos como 0
+  const c = config[sigla];
+  if (!c) return null;
+  if (c.modo==='simple') { const n=parseFloat(c.notaSimple); return isNaN(n)?null:n; }
+  const prom = getPromSeccionesParcial(sigla);
+  if (prom===null) return null;
+  if (c.global.activa) {
+    const ng=parseFloat(c.global.nota);
+    const ngEfectiva = isNaN(ng) ? 0 : ng; // certamen global pendiente también cuenta como 0
+    const pg=parseFloat(c.global.pesoGlobal)||40;
+    const pr=parseFloat(c.global.pesoRamo)||60;
+    return (ngEfectiva*pg+prom*pr)/(pg+pr);
+  }
+  return prom;
+}
+
+function hayPendientes(sigla) {
+  const c = config[sigla];
+  if (!c||c.modo==='simple') return false;
+  const secs = c.secciones;
+  for (const k of ['certamenes','controles','tareas']) {
+    const sec=secs[k]; if (!sec.activa) continue;
+    const ef=itemsEfectivos(sec.items,sec.descartar);
+    if (ef.some(it=>it.nota===''||isNaN(parseFloat(it.nota)))) return true;
+  }
+  if (secs.laboratorio.activa && labPendientes(secs.laboratorio)) return true;
+  if (c.global.activa && (c.global.nota===''||isNaN(parseFloat(c.global.nota)))) return true;
+  return false;
+}
+
+function calcNecesita(sigla) {
+  const c = config[sigla];
+  if (!c||c.modo==='simple') return null;
+  const secs = c.secciones;
+
+  // Acumular: cuánto ya hay y cuánto falta (en unidades de peso de la nota final)
+  let valorAcum=0, pesoAcum=0, pesoPend=0;
+
+  for (const k of ['certamenes','controles','tareas']) {
+    const sec=secs[k]; if (!sec.activa) continue;
+    const w=parseFloat(sec.peso)||0;
+    const ef=itemsEfectivos(sec.items,sec.descartar);
+    const conNota=ef.filter(it=>!isNaN(parseFloat(it.nota)));
+    const sinNota=ef.filter(it=>isNaN(parseFloat(it.nota))||it.nota==='');
+    if (!sinNota.length) {
+      const p=promItems(sec.items,sec.descartar);
+      if (p!==null){valorAcum+=p*w;pesoAcum+=w;}
+    } else if (!conNota.length) {
+      pesoPend+=w;
+    } else {
+      const frac=conNota.length/ef.length;
+      const p=promItems(sec.items,sec.descartar);
+      if (p!==null){valorAcum+=p*w*frac;pesoAcum+=w*frac;}
+      pesoPend+=w*(1-frac);
+    }
+  }
+
+  if (secs.laboratorio.activa) {
+    const w=parseFloat(secs.laboratorio.peso)||0;
+    const pend=labPendientes(secs.laboratorio);
+    const p=promLab(secs.laboratorio);
+    if (!pend && p!==null){valorAcum+=p*w;pesoAcum+=w;}
+    else if (pend && p!==null){valorAcum+=p*w*0.5;pesoAcum+=w*0.5;pesoPend+=w*0.5;}
+    else pesoPend+=w;
+  }
+
+  const totalPesoSecs = pesoAcum+pesoPend;
+
+  if (c.global.activa) {
+    const ng=parseFloat(c.global.nota);
+    const pg=parseFloat(c.global.pesoGlobal)||40;
+    const pr=parseFloat(c.global.pesoRamo)||60;
+    // Si secciones completas pero falta global
+    if (pesoPend<=0 && isNaN(ng)) {
+      const promRamo = totalPesoSecs>0 ? valorAcum/totalPesoSecs : 0;
+      return (NOTA_MIN*(pg+pr) - promRamo*pr)/pg;
+    }
+    // Si hay pendientes en secciones
+    if (pesoPend>0) {
+      const notaMinRamo = !isNaN(ng) ? (NOTA_MIN*(pg+pr)-ng*pg)/pr : NOTA_MIN;
+      return totalPesoSecs>0 ? (notaMinRamo*totalPesoSecs-valorAcum)/pesoPend : null;
+    }
+    return null;
+  }
+
+  if (pesoPend<=0) return null;
+  return (NOTA_MIN*totalPesoSecs-valorAcum)/pesoPend;
+}
+
+// ─── RENDER HELPERS ──────────────────────────
+
+function notaColorCls(n) { return n===null?'':n>=NOTA_MIN?'ap':'rp'; }
+
+function estadoBadgeHTML(sigla) {
+  const n=getNotaFinal(sigla), p=getNotaParcial(sigla), pend=hayPendientes(sigla);
+  if (pend) {
+    if (p===null) return '<span class="badge-estado badge-nd">—</span>';
+    return `<span class="badge-estado" style="background:#FEF3C7;color:#92400E;font-size:10px;">~${p>=NOTA_MIN?'AP':'RP'}</span>`;
+  }
+  if (n===null) return '<span class="badge-estado badge-nd">—</span>';
+  return n>=NOTA_MIN?'<span class="badge-estado badge-ap">AP</span>':'<span class="badge-estado badge-rp">RP</span>';
+}
+
+function necesitaHTML(sigla) {
+  const n=getNotaFinal(sigla), pend=hayPendientes(sigla);
+  if (n!==null&&n>=NOTA_MIN&&!pend) return '<span class="necesita nec-ok">✓</span>';
+  const nec=calcNecesita(sigla);
+  if (nec===null) return '<span class="necesita nec-nd">—</span>';
+  if (nec<=0) return '<span class="necesita nec-ok">✓</span>';
+  if (nec>100) return '<span class="necesita nec-imposible">Imposible</span>';
+  const cls=nec>=85?'nec-dificil':nec>=70?'nec-medio':'nec-facil';
+  return `<span class="necesita ${cls}">${nec.toFixed(1)}</span>`;
+}
+
+function notaCeldaHTML(sigla) {
+  const c=config[sigla]; if (!c) return '';
+  const n=getNotaFinal(sigla), p=getNotaParcial(sigla), pend=hayPendientes(sigla);
+  if (c.modo==='simple') {
+    const nNum=parseFloat(c.notaSimple);
+    return `<input class="nota-input ${notaColorCls(isNaN(nNum)?null:nNum)}" type="number" min="0" max="100" step="0.5" placeholder="—" value="${c.notaSimple}" onchange="setNotaDirecta('${sigla}',this.value)"/>`;
+  }
+  if (n!==null) return `<span class="nota-display ${notaColorCls(n)}">${n.toFixed(2)}</span>`;
+  if (p!==null&&pend) return `<div style="text-align:center"><span class="nota-display parcial">${p.toFixed(2)}</span><div style="font-size:10px;color:var(--texto-suave);margin-top:2px">parcial</div></div>`;
+  return `<span class="nota-display" style="color:var(--texto-suave)">—</span>`;
+}
+
+// ─── GLOBAL STATS ────────────────────────────
+
+function globalStats() {
+  let total=0,ap=0,rp=0,sumN=0,cntN=0,totCred=0,credAp=0;
+  miSemestres.forEach(s=>(s.ramos||[]).forEach(r=>{
+    total++; totCred+=r.cred;
+    const n=getNotaFinal(r.sigla), p=getNotaParcial(r.sigla), pend=hayPendientes(r.sigla);
+    if (!pend&&n!==null){sumN+=n;cntN++;if(n>=NOTA_MIN){ap++;credAp+=r.cred;}else rp++;}
+    else if(pend&&p!==null){sumN+=p;cntN++;if(p<NOTA_MIN)rp++;}
+  }));
+  return {total,ap,rp,prom:cntN>0?sumN/cntN:null,avance:total>0?(ap/total)*100:0,credAp,totCred};
+}
+
+function semStats(sem) {
+  let ap=0,rp=0,sumN=0,cntN=0;
+  const ramos = sem.ramos || [];
+  ramos.forEach(r=>{
+    const n=getNotaFinal(r.sigla),p=getNotaParcial(r.sigla),pend=hayPendientes(r.sigla);
+    if(!pend&&n!==null){sumN+=n;cntN++;if(n>=NOTA_MIN)ap++;else rp++;}
+    else if(pend&&p!==null){sumN+=p;cntN++;if(p<NOTA_MIN)rp++;}
+  });
+  return {ap,rp,total:ramos.length,prom:cntN>0?sumN/cntN:null};
+}
+
+function promColor(p){if(p===null)return'v-neutro';if(p>=70)return'v-verde';if(p>=NOTA_MIN)return'v-amarillo';return'v-rojo';}
+
+// ─── RENDER PRINCIPAL ────────────────────────
+
+function renderStats() {
+  const s=globalStats();
+  const ps=s.prom!==null?s.prom.toFixed(2):'—';
+  document.getElementById('stats-bar').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Promedio general</div><div class="stat-value ${promColor(s.prom)}">${ps}</div></div>
+    <div class="stat-card"><div class="stat-label">Aprobados</div><div class="stat-value v-verde">${s.ap}<span style="font-size:14px;font-weight:400;color:#888">/${s.total}</span></div></div>
+    <div class="stat-card"><div class="stat-label">Reprobados</div><div class="stat-value ${s.rp>0?'v-rojo':'v-neutro'}">${s.rp}</div></div>
+    <div class="stat-card"><div class="stat-label">Avance</div><div class="stat-value ${s.avance>=70?'v-verde':s.avance>=30?'v-amarillo':'v-neutro'}">${Math.round(s.avance)}%</div></div>`;
+  guardarDatos();
+}
+
+function renderTabs() {
+  const ordenados=[...miSemestres].sort((a,b)=>a.numero-b.numero);
+  const tabsHTML = ordenados.map(s=>({id:'sem'+s.numero,label:'Sem '+s.numero}))
+    .map(t=>`<button class="tab-btn ${tabActual===t.id?'activo':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
+  const btnNuevo = `<button class="tab-btn" onclick="agregarSemestre()" title="Agregar un nuevo semestre"
+    style="color:var(--verde);font-weight:600;">+ Nuevo</button>`;
+  const btnResumen = `<button class="tab-btn ${tabActual==='resumen'?'activo':''}" onclick="setTab('resumen')">📊 Resumen</button>`;
+  document.getElementById('tabs-inner').innerHTML = tabsHTML + btnNuevo + btnResumen;
+}
+
+function renderContent() {
+  const content=document.getElementById('content');
+  if (tabActual==='resumen'){content.innerHTML=renderResumen();return;}
+
+  const numero=parseInt(tabActual.replace('sem',''));
+  let sem=miSemestres.find(s=>s.numero===numero);
+  if (!sem) {
+    // La pestaña activa ya no existe (se borró el semestre): volvemos a la primera disponible
+    tabActual = miSemestres.length ? 'sem'+miSemestres[0].numero : 'resumen';
+    renderTabs();
+    return renderContent();
+  }
+  const ramos = sem.ramos || [];
+  const ss=semStats(sem);
+  const promStr=ss.prom!==null?ss.prom.toFixed(2):'—';
+
+  let badges=`<span class="pill pill-gris">${ss.ap+ss.rp}/${ss.total} con nota</span>`;
+  if(ss.ap>0) badges+=`<span class="pill pill-verde">${ss.ap} aprobados</span>`;
+  if(ss.rp>0) badges+=`<span class="pill pill-rojo">${ss.rp} reprobados</span>`;
+  if(ss.prom!==null){
+    const cls=ss.prom>=70?'pill-verde':ss.prom>=NOTA_MIN?'':'pill-rojo';
+    badges+=`<span class="pill ${cls}" style="${!cls?'background:var(--amarillo-bg);color:var(--amarillo)':''}">Prom. ${promStr}</span>`;
+  }
+
+  const filas = ramos.length===0 ? `
+    <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px;">
+      Este semestre todavía no tiene ramos. Agrégalos abajo 👇
+    </td></tr>` : ramos.map(r=>`
+    <tr>
+      <td><div class="ramo-nombre">${r.nombre}</div><div class="ramo-sigla">${r.sigla} · ${r.cred} cred</div></td>
+      <td class="c">${notaCeldaHTML(r.sigla)}</td>
+      <td class="c">${estadoBadgeHTML(r.sigla)}</td>
+      <td style="text-align:right">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;">
+          ${necesitaHTML(r.sigla)}
+          <button onclick="quitarRamoDeSemestre(${sem.numero},'${r.sigla}')" title="Quitar ramo de este semestre"
+            style="width:22px;height:22px;border:1px solid var(--gris-borde);border-radius:6px;background:var(--blanco);cursor:pointer;color:var(--rojo);font-size:13px;line-height:1;flex-shrink:0;">×</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  content.innerHTML=`
+    <div class="sem-header">
+      <div class="sem-title">Semestre ${sem.numero}</div>
+      <div class="sem-badges">${badges}</div>
+    </div>
+    <div class="tabla-card">
+      <table class="tabla-ramos">
+        <thead><tr><th>Asignatura</th><th class="c">Promedio / Nota</th><th class="c">Estado</th><th style="text-align:right">Necesita para pasar</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+
+    ${renderAgregarRamo(sem.numero)}
+
+    ${ramos.length>0?`
+    <div class="pond-section">
+      <div class="pond-section-header"><h3>Calculadora por evaluaciones</h3><p>Haz clic en cada ramo para desglosar certámenes, controles, laboratorio y certamen global</p></div>
+      ${ramos.map(r=>renderRamoDetalle(r)).join('')}
+    </div>`:''}
+
+    <div style="margin-top:1.25rem;text-align:center;">
+      <button onclick="quitarSemestre(${sem.numero})" style="font-size:12px;padding:6px 14px;border:1px solid var(--rojo);border-radius:var(--radio);background:var(--blanco);color:var(--rojo);cursor:pointer;">
+        🗑 Eliminar Semestre ${sem.numero} completo
+      </button>
+    </div>`;
+}
+
+// ─── GESTIÓN DE RAMOS POR SEMESTRE ───────────
+
+function renderAgregarRamo(numeroSem) {
+  const yaElegidos = new Set();
+  miSemestres.forEach(s=>(s.ramos||[]).forEach(r=>yaElegidos.add(r.sigla)));
+  const disponibles = BANCO_RAMOS.filter(r=>!yaElegidos.has(r.sigla));
+
+  return `
+    <div class="tabla-card" style="padding:14px 16px;margin-top:14px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">➕ Agregar ramo a este semestre</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+        <select id="select-banco-${numeroSem}" style="flex:1;min-width:220px;padding:7px 10px;border:1px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;background:var(--blanco);">
+          <option value="">— Elegir del banco de ramos (${disponibles.length} disponibles) —</option>
+          ${disponibles.map(r=>`<option value="${r.sigla}">${r.nombre} (${r.sigla} · ${r.cred} cred)</option>`).join('')}
+        </select>
+        <button onclick="agregarRamoDelBanco(${numeroSem})" class="btn-agregar" style="border-color:var(--verde);color:var(--verde);padding:7px 14px;">
+          + Agregar del banco
+        </button>
+      </div>
+
+      <div style="font-size:11px;color:var(--texto-suave);margin:10px 0 6px;">¿No está en la lista? Agrega un ramo personalizado:</div>
+      <div style="display:grid;grid-template-columns:1fr 110px 90px auto;gap:8px;align-items:center;">
+        <input id="custom-nombre-${numeroSem}" type="text" placeholder="Nombre del ramo" class="item-input" style="font-size:13px;padding:7px 10px;"/>
+        <input id="custom-sigla-${numeroSem}" type="text" placeholder="Sigla" class="item-input" style="font-size:13px;padding:7px 10px;"/>
+        <input id="custom-cred-${numeroSem}" type="number" min="1" max="20" placeholder="Créd." class="item-input" style="font-size:13px;padding:7px 10px;"/>
+        <button onclick="agregarRamoPersonalizado(${numeroSem})" class="btn-agregar" style="border-color:var(--azul);color:var(--azul);padding:7px 14px;white-space:nowrap;">
+          + Agregar
+        </button>
+      </div>
+    </div>`;
+}
+
+function agregarRamoDelBanco(numeroSem) {
+  const sel = document.getElementById('select-banco-'+numeroSem);
+  const sigla = sel ? sel.value : '';
+  if (!sigla) return;
+  const ramo = BANCO_POR_SIGLA[sigla];
+  if (!ramo) return;
+  const sem = miSemestres.find(s=>s.numero===numeroSem);
+  if (!sem) return;
+  if (sem.ramos.some(r=>r.sigla===sigla)) return; // ya está
+  sem.ramos.push({ sigla: ramo.sigla, nombre: ramo.nombre, cred: ramo.cred });
+  asegurarConfig(sigla);
+  renderStats(); renderTabs(); renderContent();
+}
+
+function generarSiglaAuto(nombre) {
+  const base = (nombre||'RAMO').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6) || 'RAMO';
+  let n = 1, sigla = base + n;
+  while (config[sigla]) { n++; sigla = base + n; }
+  return sigla;
+}
+
+function agregarRamoPersonalizado(numeroSem) {
+  const nombreEl = document.getElementById('custom-nombre-'+numeroSem);
+  const siglaEl = document.getElementById('custom-sigla-'+numeroSem);
+  const credEl = document.getElementById('custom-cred-'+numeroSem);
+  const nombre = (nombreEl.value||'').trim();
+  if (!nombre) { nombreEl.focus(); return; }
+  let sigla = (siglaEl.value||'').trim().toUpperCase();
+  if (!sigla) sigla = generarSiglaAuto(nombre);
+  const cred = parseInt(credEl.value) || 4;
+
+  const sem = miSemestres.find(s=>s.numero===numeroSem);
+  if (!sem) return;
+
+  // Evitar siglas duplicadas entre semestres (cada ramo debe ser único
+  // porque la sigla es la clave de sus notas guardadas)
+  if (config[sigla] && !sem.ramos.some(r=>r.sigla===sigla)) {
+    const yaExisteEnOtroSem = miSemestres.some(s=>(s.ramos||[]).some(r=>r.sigla===sigla));
+    if (yaExisteEnOtroSem) { sigla = generarSiglaAuto(nombre); }
+  }
+  if (sem.ramos.some(r=>r.sigla===sigla)) return; // ya está en este semestre
+
+  sem.ramos.push({ sigla, nombre, cred });
+  asegurarConfig(sigla);
+  nombreEl.value=''; siglaEl.value=''; credEl.value='';
+  renderStats(); renderTabs(); renderContent();
+}
+
+function quitarRamoDeSemestre(numeroSem, sigla) {
+  const sem = miSemestres.find(s=>s.numero===numeroSem);
+  if (!sem) return;
+  sem.ramos = (sem.ramos||[]).filter(r=>r.sigla!==sigla);
+  // No borramos config[sigla]: si el usuario lo vuelve a agregar, recupera sus notas.
+  renderStats(); renderTabs(); renderContent();
+}
+
+function agregarSemestre() {
+  const maxNum = miSemestres.reduce((m,s)=>Math.max(m,s.numero),0);
+  const nuevoNum = maxNum + 1;
+  miSemestres.push({ numero: nuevoNum, ramos: [] });
+  tabActual = 'sem'+nuevoNum;
+  renderStats(); renderTabs(); renderContent();
+}
+
+function quitarSemestre(numeroSem) {
+  if (!confirm(`¿Eliminar el Semestre ${numeroSem} completo? Los ramos se sacan de tu organización (tus notas no se borran: si vuelves a agregar el mismo ramo en otro semestre, las recuperas).`)) return;
+  miSemestres = miSemestres.filter(s=>s.numero!==numeroSem);
+  if (miSemestres.length===0) miSemestres.push({ numero: 1, ramos: [] });
+  tabActual = 'sem'+miSemestres[0].numero;
+  renderStats(); renderTabs(); renderContent();
+}
+
+// ─── RENDER DETALLE RAMO ─────────────────────
+
+function renderRamoDetalle(r) {
+  const c=config[r.sigla];
+  const abierto=expandidos[r.sigla]||false;
+  const p=getNotaParcial(r.sigla);
+  const pend=hayPendientes(r.sigla);
+  const subLabel=c.modo==='simple'?'Haz clic para configurar evaluaciones':
+    ['certamenes','controles','tareas'].filter(k=>c.secciones[k].activa).concat(c.secciones.laboratorio.activa?['laboratorio']:[])
+      .map(k=>({certamenes:'Certámenes',controles:'Controles',tareas:'Tareas',laboratorio:'Lab'}[k])).join(' · ')||'Sin secciones';
+
+  if (!abierto) return `
+    <div class="pond-ramo">
+      <div class="pond-ramo-header" onclick="toggleExpandir('${r.sigla}')">
+        <div><div class="pond-ramo-title">${r.nombre}</div><div class="pond-ramo-subtitle">${subLabel}</div></div>
+        <span class="chevron">▾</span>
+      </div>
+    </div>`;
+
+  // Nota calculada pill
+  const nFinal=getNotaFinal(r.sigla);
+  let ncPill='';
+  if(nFinal!==null){const cls=nFinal>=NOTA_MIN?'nc-ap':'nc-rp';ncPill=`<span class="nc-pill ${cls}">Nota final: ${nFinal.toFixed(2)} ${nFinal>=NOTA_MIN?'✓':'✗'}</span>`;}
+  else if(p!==null&&pend){ncPill=`<span class="nc-pill nc-parcial">Parcial: ${p.toFixed(2)} (notas pendientes)</span>`;}
+  else{ncPill=`<span class="nc-pill nc-nd">Ingresa notas para calcular</span>`;}
+
+  // Toggle modo
+  const modoHTML=`
+    <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;">
+      <span style="font-size:12px;color:var(--texto-suave)">Modo:</span>
+      <button onclick="setModo('${r.sigla}','simple')" style="padding:4px 12px;font-size:12px;border-radius:100px;border:1px solid var(--gris-borde);cursor:pointer;background:${c.modo==='simple'?'#0F2E24':'var(--blanco)'};color:${c.modo==='simple'?'#fff':'var(--texto)'}">Nota directa</button>
+      <button onclick="setModo('${r.sigla}','secciones')" style="padding:4px 12px;font-size:12px;border-radius:100px;border:1px solid var(--gris-borde);cursor:pointer;background:${c.modo==='secciones'?'#0F2E24':'var(--blanco)'};color:${c.modo==='secciones'?'#fff':'var(--texto)'}">Por secciones</button>
+    </div>`;
+
+  let bodyHTML='';
+  if (c.modo==='simple') {
+    const nNum=parseFloat(c.notaSimple);
+    const cls=isNaN(nNum)?'':nNum>=NOTA_MIN?'ap':'rp';
+    bodyHTML=`<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:13px;color:var(--texto-suave)">Nota final:</span>
+      <input class="nota-input ${cls}" type="number" min="0" max="100" step="0.5" value="${c.notaSimple}" placeholder="—" onchange="setNotaDirecta('${r.sigla}',this.value)"/></div>`;
+  } else {
+    const pesoSecs=['certamenes','controles','tareas'].filter(k=>c.secciones[k].activa).reduce((s,k)=>s+(parseFloat(c.secciones[k].peso)||0),0)
+      +(c.secciones.laboratorio.activa?(parseFloat(c.secciones.laboratorio.peso)||0):0);
+    const pesosOk=Math.abs(pesoSecs-100)<0.1;
+    bodyHTML=`
+      ${renderSecCertamenes(r.sigla,c)}
+      ${renderSecControles(r.sigla,c)}
+      ${renderSecTareas(r.sigla,c)}
+      ${renderSecLaboratorio(r.sigla,c)}
+      ${renderGlobal(r.sigla,c)}
+      <div class="nota-calc-bar">
+        <span class="pond-total ${pesosOk?'ok':'err'}" style="font-size:12px;padding:5px 10px;border-radius:var(--radio);">
+          ${pesosOk?'✓ Pesos suman 100%':'⚠ Pesos suman '+pesoSecs.toFixed(0)+'%'}
+        </span>
+        ${ncPill}
+      </div>`;
+  }
+  if (c.modo==='simple') bodyHTML+=`<div class="nota-calc-bar">${ncPill}</div>`;
+
+  return `
+    <div class="pond-ramo">
+      <div class="pond-ramo-header" onclick="toggleExpandir('${r.sigla}')">
+        <div><div class="pond-ramo-title">${r.nombre}</div><div class="pond-ramo-subtitle">${subLabel}</div></div>
+        <span class="chevron abierto">▾</span>
+      </div>
+      <div class="pond-body abierto">${modoHTML}${bodyHTML}</div>
+    </div>`;
+}
+
+// ─── RENDER SECCIONES ────────────────────────
+
+function renderSecCertamenes(sigla, c) {
+  const sec=c.secciones.certamenes;
+  const color='#1D4ED8'; const colorBg='#EFF6FF';
+  const prom=promItems(sec.items,sec.descartar);
+  const ef=itemsEfectivos(sec.items,sec.descartar);
+  const pend=ef.filter(it=>it.nota===''||isNaN(parseFloat(it.nota))).length;
+  const desc=descartados(sec.items,sec.descartar);
+  const promLabel=prom!==null?`<span style="font-size:13px;font-weight:600;color:${prom>=NOTA_MIN?'var(--verde)':'var(--rojo)'}">${prom.toFixed(1)}${pend>0?` <span style="font-size:10px;font-weight:400;color:var(--texto-suave)">(${pend} pend.)</span>`:''}</span>`:'<span style="font-size:12px;color:var(--texto-suave)">'+(pend>0?pend+' pendiente'+(pend>1?'s':''):'Sin notas')+'</span>';
+  const descHTML=desc.length?`<span style="font-size:11px;color:var(--rojo);background:var(--rojo-bg);padding:2px 8px;border-radius:100px;">🗑 ${desc.map(d=>d.nota).join(', ')}</span>`:'';
+  const maxDesc=Math.max(0,sec.items.length-1);
+
+  const headerTog=`
+    <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
+      <button class="toggle-btn" onclick="toggleSec('${sigla}','certamenes')" style="background:${sec.activa?color:'var(--gris-borde)'}">
+        <span style="${sec.activa?'right:2px':'left:2px'}"></span></button>
+      <span style="font-size:13px;font-weight:600;color:${sec.activa?color:'var(--texto-suave)'}">📝 Certámenes</span>
+      ${sec.activa?`<span style="font-size:11px;color:var(--texto-suave)">Peso:</span>
+        <input type="number" min="0" max="100" value="${sec.peso}" style="width:52px;padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;text-align:center;background:var(--blanco);" onchange="setPeso('${sigla}','certamenes',this.value)"/>%`
+        :`<span style="font-size:11px;color:var(--texto-suave)">(desactivado)</span>`}
+    </div>
+    ${sec.activa?`<div>${promLabel}</div>`:''}`;
+
+  if (!sec.activa) return `<div style="padding:10px 12px;border:1px solid var(--gris-borde);border-radius:var(--radio);margin-bottom:8px;background:var(--gris-bg);display:flex;align-items:center;justify-content:space-between;">${headerTog}</div>`;
+
+  const items=sec.items.map((it,i)=>{
+    const nd=descartados(sec.items,sec.descartar);
+    const esDesc=nd.some(d=>d._i===i);
+    const nNum=parseFloat(it.nota);
+    const borde=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--gris-borde)';
+    const col=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--texto)';
+    return `<div class="item-grid" style="grid-template-columns:1fr 90px 26px;opacity:${esDesc?'0.4':'1'}">
+      <input type="text" class="item-input" value="${it.nombre}" style="${esDesc?'text-decoration:line-through':''}" onchange="updItem('${sigla}','certamenes',${i},'nombre',this.value)"/>
+      <input type="number" min="0" max="100" step="0.5" class="item-input nota-val" value="${it.nota}" placeholder="Nota" style="border:1px solid ${borde};color:${col};" onchange="updItem('${sigla}','certamenes',${i},'nota',this.value)"/>
+      <button class="btn-quitar" onclick="quitarItem('${sigla}','certamenes',${i})">×</button></div>`;
+  }).join('');
+
+  return `<div class="sec-bloque" style="border:1px solid ${color}33;background:${colorBg};margin-bottom:8px;">
+    <div class="sec-bloque-header"><div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">${headerTog}</div></div>
+    <div class="item-grid" style="grid-template-columns:1fr 90px 26px;margin-bottom:4px;">
+      <span style="font-size:11px;color:var(--texto-suave)">Evaluación</span><span style="font-size:11px;color:var(--texto-suave);text-align:center">Nota (0-100)</span><span></span></div>
+    ${items}
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
+      <button class="btn-agregar" style="border-color:${color}55;color:${color}" onclick="agregarItem('${sigla}','certamenes','Certamen')">+ Agregar</button>
+      ${maxDesc>0?`<span style="font-size:12px;color:var(--texto-suave)">Descartar peores:
+        <select onchange="setDescartar('${sigla}','certamenes',this.value)" style="padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;background:var(--blanco);">
+          ${Array.from({length:maxDesc+1},(_,i)=>`<option value="${i}" ${sec.descartar===i?'selected':''}>${i===0?'ninguna':i}</option>`).join('')}
+        </select> ${descHTML}</span>`:''}
+    </div></div>`;
+}
+
+function renderSecControles(sigla, c) {
+  const sec=c.secciones.controles;
+  const color='#6D28D9'; const colorBg='#F5F3FF';
+  const prom=promItems(sec.items,sec.descartar);
+  const ef=itemsEfectivos(sec.items,sec.descartar);
+  const pend=ef.filter(it=>it.nota===''||isNaN(parseFloat(it.nota))).length;
+  const desc=descartados(sec.items,sec.descartar);
+  const promLabel=prom!==null?`<span style="font-size:13px;font-weight:600;color:${prom>=NOTA_MIN?'var(--verde)':'var(--rojo)'}">${prom.toFixed(1)}${pend>0?` <span style="font-size:10px;font-weight:400;color:var(--texto-suave)">(${pend} pend.)</span>`:''}</span>`:'<span style="font-size:12px;color:var(--texto-suave)">'+(pend>0?pend+' pendiente'+(pend>1?'s':''):'Sin notas')+'</span>';
+  const descHTML=desc.length?`<span style="font-size:11px;color:var(--rojo);background:var(--rojo-bg);padding:2px 8px;border-radius:100px;">🗑 ${desc.map(d=>d.nota).join(', ')}</span>`:'';
+  const maxDesc=Math.max(0,sec.items.length-1);
+
+  const headerTog=`
+    <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
+      <button class="toggle-btn" onclick="toggleSec('${sigla}','controles')" style="background:${sec.activa?color:'var(--gris-borde)'}">
+        <span style="${sec.activa?'right:2px':'left:2px'}"></span></button>
+      <span style="font-size:13px;font-weight:600;color:${sec.activa?color:'var(--texto-suave)'}">📋 Controles</span>
+      ${sec.activa?`<span style="font-size:11px;color:var(--texto-suave)">Peso:</span>
+        <input type="number" min="0" max="100" value="${sec.peso}" style="width:52px;padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;text-align:center;background:var(--blanco);" onchange="setPeso('${sigla}','controles',this.value)"/>%`
+        :`<span style="font-size:11px;color:var(--texto-suave)">(desactivado)</span>`}
+    </div>
+    ${sec.activa?`<div>${promLabel}</div>`:''}`;
+
+  if (!sec.activa) return `<div style="padding:10px 12px;border:1px solid var(--gris-borde);border-radius:var(--radio);margin-bottom:8px;background:var(--gris-bg);display:flex;align-items:center;justify-content:space-between;">${headerTog}</div>`;
+
+  const items=sec.items.map((it,i)=>{
+    const nd=descartados(sec.items,sec.descartar);
+    const esDesc=nd.some(d=>d._i===i);
+    const nNum=parseFloat(it.nota);
+    const borde=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--gris-borde)';
+    const col=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--texto)';
+    return `<div class="item-grid" style="grid-template-columns:1fr 90px 26px;opacity:${esDesc?'0.4':'1'}">
+      <input type="text" class="item-input" value="${it.nombre}" style="${esDesc?'text-decoration:line-through':''}" onchange="updItem('${sigla}','controles',${i},'nombre',this.value)"/>
+      <input type="number" min="0" max="100" step="0.5" class="item-input nota-val" value="${it.nota}" placeholder="Nota" style="border:1px solid ${borde};color:${col};" onchange="updItem('${sigla}','controles',${i},'nota',this.value)"/>
+      <button class="btn-quitar" onclick="quitarItem('${sigla}','controles',${i})">×</button></div>`;
+  }).join('');
+
+  return `<div class="sec-bloque" style="border:1px solid ${color}33;background:${colorBg};margin-bottom:8px;">
+    <div class="sec-bloque-header"><div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">${headerTog}</div></div>
+    <div class="item-grid" style="grid-template-columns:1fr 90px 26px;margin-bottom:4px;">
+      <span style="font-size:11px;color:var(--texto-suave)">Evaluación</span><span style="font-size:11px;color:var(--texto-suave);text-align:center">Nota (0-100)</span><span></span></div>
+    ${items}
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
+      <button class="btn-agregar" style="border-color:${color}55;color:${color}" onclick="agregarItem('${sigla}','controles','Control')">+ Agregar</button>
+      ${maxDesc>0?`<span style="font-size:12px;color:var(--texto-suave)">Descartar peores:
+        <select onchange="setDescartar('${sigla}','controles',this.value)" style="padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;background:var(--blanco);">
+          ${Array.from({length:maxDesc+1},(_,i)=>`<option value="${i}" ${sec.descartar===i?'selected':''}>${i===0?'ninguna':i}</option>`).join('')}
+        </select> ${descHTML}</span>`:''}
+    </div></div>`;
+}
+
+function renderSecTareas(sigla, c) {
+  const sec=c.secciones.tareas;
+  const color='#C2410C'; const colorBg='#FFF7ED';
+  const prom=promItems(sec.items,sec.descartar);
+  const ef=itemsEfectivos(sec.items,sec.descartar);
+  const pend=ef.filter(it=>it.nota===''||isNaN(parseFloat(it.nota))).length;
+  const desc=descartados(sec.items,sec.descartar);
+  const promLabel=prom!==null?`<span style="font-size:13px;font-weight:600;color:${prom>=NOTA_MIN?'var(--verde)':'var(--rojo)'}">${prom.toFixed(1)}${pend>0?` <span style="font-size:10px;font-weight:400;color:var(--texto-suave)">(${pend} pend.)</span>`:''}</span>`:'<span style="font-size:12px;color:var(--texto-suave)">'+(pend>0?pend+' pendiente'+(pend>1?'s':''):'Sin notas')+'</span>';
+  const descHTML=desc.length?`<span style="font-size:11px;color:var(--rojo);background:var(--rojo-bg);padding:2px 8px;border-radius:100px;">🗑 ${desc.map(d=>d.nota).join(', ')}</span>`:'';
+  const maxDesc=Math.max(0,sec.items.length-1);
+
+  const headerTog=`
+    <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
+      <button class="toggle-btn" onclick="toggleSec('${sigla}','tareas')" style="background:${sec.activa?color:'var(--gris-borde)'}">
+        <span style="${sec.activa?'right:2px':'left:2px'}"></span></button>
+      <span style="font-size:13px;font-weight:600;color:${sec.activa?color:'var(--texto-suave)'}">📌 Tareas</span>
+      ${sec.activa?`<span style="font-size:11px;color:var(--texto-suave)">Peso:</span>
+        <input type="number" min="0" max="100" value="${sec.peso}" style="width:52px;padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;text-align:center;background:var(--blanco);" onchange="setPeso('${sigla}','tareas',this.value)"/>%`
+        :`<span style="font-size:11px;color:var(--texto-suave)">(desactivado)</span>`}
+    </div>
+    ${sec.activa?`<div>${promLabel}</div>`:''}`;
+
+  if (!sec.activa) return `<div style="padding:10px 12px;border:1px solid var(--gris-borde);border-radius:var(--radio);margin-bottom:8px;background:var(--gris-bg);display:flex;align-items:center;justify-content:space-between;">${headerTog}</div>`;
+
+  const items=sec.items.map((it,i)=>{
+    const nd=descartados(sec.items,sec.descartar);
+    const esDesc=nd.some(d=>d._i===i);
+    const nNum=parseFloat(it.nota);
+    const borde=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--gris-borde)';
+    const col=!isNaN(nNum)?(nNum>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--texto)';
+    return `<div class="item-grid" style="grid-template-columns:1fr 90px 26px;opacity:${esDesc?'0.4':'1'}">
+      <input type="text" class="item-input" value="${it.nombre}" style="${esDesc?'text-decoration:line-through':''}" onchange="updItem('${sigla}','tareas',${i},'nombre',this.value)"/>
+      <input type="number" min="0" max="100" step="0.5" class="item-input nota-val" value="${it.nota}" placeholder="Nota" style="border:1px solid ${borde};color:${col};" onchange="updItem('${sigla}','tareas',${i},'nota',this.value)"/>
+      <button class="btn-quitar" onclick="quitarItem('${sigla}','tareas',${i})">×</button></div>`;
+  }).join('');
+
+  return `<div class="sec-bloque" style="border:1px solid ${color}33;background:${colorBg};margin-bottom:8px;">
+    <div class="sec-bloque-header"><div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">${headerTog}</div></div>
+    <div class="item-grid" style="grid-template-columns:1fr 90px 26px;margin-bottom:4px;">
+      <span style="font-size:11px;color:var(--texto-suave)">Evaluación</span><span style="font-size:11px;color:var(--texto-suave);text-align:center">Nota (0-100)</span><span></span></div>
+    ${items}
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
+      <button class="btn-agregar" style="border-color:${color}55;color:${color}" onclick="agregarItem('${sigla}','tareas','Tarea')">+ Agregar</button>
+      ${maxDesc>0?`<span style="font-size:12px;color:var(--texto-suave)">Descartar peores:
+        <select onchange="setDescartar('${sigla}','tareas',this.value)" style="padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;background:var(--blanco);">
+          ${Array.from({length:maxDesc+1},(_,i)=>`<option value="${i}" ${sec.descartar===i?'selected':''}>${i===0?'ninguna':i}</option>`).join('')}
+        </select> ${descHTML}</span>`:''}
+    </div></div>`;
+}
+
+function renderSecLaboratorio(sigla, c) {
+  const lab=c.secciones.laboratorio;
+  const color='#047857'; const colorBg='#ECFDF5';
+  const promL=promLab(lab);
+  const pend=labPendientes(lab);
+
+  const headerTog=`
+    <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
+      <button class="toggle-btn" onclick="toggleSec('${sigla}','laboratorio')" style="background:${lab.activa?color:'var(--gris-borde)'}">
+        <span style="${lab.activa?'right:2px':'left:2px'}"></span></button>
+      <span style="font-size:13px;font-weight:600;color:${lab.activa?color:'var(--texto-suave)'}">🧪 Laboratorio</span>
+      ${lab.activa?`<span style="font-size:11px;color:var(--texto-suave)">Peso:</span>
+        <input type="number" min="0" max="100" value="${lab.peso}" style="width:52px;padding:3px 6px;border:1px solid var(--gris-borde);border-radius:6px;font-size:12px;text-align:center;background:var(--blanco);" onchange="setPeso('${sigla}','laboratorio',this.value)"/>%`
+        :`<span style="font-size:11px;color:var(--texto-suave)">(desactivado)</span>`}
+    </div>
+    ${lab.activa?`<div>${promL!==null?`<span style="font-size:13px;font-weight:600;color:${promL>=NOTA_MIN?'var(--verde)':'var(--rojo)'}">${promL.toFixed(1)}${pend?' <span style="font-size:10px;font-weight:400;color:var(--texto-suave)">(pend.)</span>':''}</span>`:'<span style="font-size:12px;color:var(--texto-suave)">Sin notas</span>'}</div>`:''} `;
+
+  if (!lab.activa) return `<div style="padding:10px 12px;border:1px solid var(--gris-borde);border-radius:var(--radio);margin-bottom:8px;background:var(--gris-bg);display:flex;align-items:center;justify-content:space-between;">${headerTog}</div>`;
+
+  // Subsecciones del lab
+  const SUB_INFO = {
+    practicos: {label:'Prácticos', emoji:'🔬', color:'#0369A1', bg:'#F0F9FF'},
+    informes:  {label:'Informes',  emoji:'📄', color:'#047857', bg:'#F0FDF4'},
+    quizzes:   {label:'Quizzes Lab', emoji:'✏️', color:'#7C3AED', bg:'#FAF5FF'},
+    prueba:    {label:'Prueba escrita', emoji:'📝', color:'#B45309', bg:'#FFFBEB'},
+    actividad: {label:'Actividad práctica', emoji:'🏋️', color:'#BE185D', bg:'#FDF2F8'},
+  };
+
+  const pesoSubTotal=Object.keys(lab.subsecciones).filter(k=>lab.subsecciones[k].activa).reduce((s,k)=>s+(parseFloat(lab.subsecciones[k].pesoSub)||0),0);
+  const pesosSubOk=Math.abs(pesoSubTotal-100)<0.1;
+
+  const subSecsHTML=Object.keys(SUB_INFO).map(k=>{
+    const sub=lab.subsecciones[k]; const inf=SUB_INFO[k];
+    const promS=promItems(sub.items,0);
+    const pendS=sub.items.some(it=>it.nota===''||isNaN(parseFloat(it.nota)));
+
+    const subHeader=`
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:${sub.activa?'8px':'0'};">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="toggle-btn" style="width:28px;height:16px;background:${sub.activa?inf.color:'var(--gris-borde)'}" onclick="toggleSubLab('${sigla}','${k}')">
+            <span style="width:12px;height:12px;top:2px;${sub.activa?'right:2px':'left:2px'}"></span></button>
+          <span style="font-size:12px;font-weight:600;color:${sub.activa?inf.color:'var(--texto-suave)'}">${inf.emoji} ${inf.label}</span>
+          ${sub.activa?`<input type="number" min="0" max="100" value="${sub.pesoSub}" style="width:46px;padding:2px 5px;border:1px solid var(--gris-borde);border-radius:5px;font-size:11px;text-align:center;background:var(--blanco);" onchange="setPesoSub('${sigla}','${k}',this.value)"/>%`:`<span style="font-size:10px;color:var(--texto-suave)">(off)</span>`}
+        </div>
+        ${sub.activa&&promS!==null?`<span style="font-size:12px;font-weight:600;color:${promS>=NOTA_MIN?'var(--verde)':'var(--rojo)'}">${promS.toFixed(1)}${pendS?' <span style="font-size:10px;font-weight:400;color:var(--texto-suave)">(pend.)</span>':''}</span>`:''}
+      </div>`;
+
+    if (!sub.activa) return `<div style="padding:7px 10px;border:1px solid var(--gris-borde);border-radius:6px;margin-bottom:6px;background:var(--gris-bg);">${subHeader}</div>`;
+
+    const subItems=sub.items.map((it,i)=>{
+      const nNum=parseFloat(it.nota);
+      const borde=!isNaN(nNum)?(nNum>=NOTA_MIN?inf.color:'var(--rojo)'):'var(--gris-borde)';
+      const col=!isNaN(nNum)?(nNum>=NOTA_MIN?inf.color:'var(--rojo)'):'var(--texto)';
+      return `<div class="item-grid" style="grid-template-columns:1fr 80px 22px;gap:5px;margin-bottom:5px;">
+        <input type="text" class="item-input" style="font-size:11px;" value="${it.nombre}" onchange="updSubLab('${sigla}','${k}',${i},'nombre',this.value)"/>
+        <input type="number" min="0" max="100" step="0.5" class="item-input nota-val" style="font-size:12px;border:1px solid ${borde};color:${col};" value="${it.nota}" placeholder="Nota" onchange="updSubLab('${sigla}','${k}',${i},'nota',this.value)"/>
+        <button class="btn-quitar" style="width:22px;height:22px;font-size:12px;" onclick="quitarSubLab('${sigla}','${k}',${i})">×</button></div>`;
+    }).join('');
+
+    return `<div style="padding:8px 10px;border:1px solid ${inf.color}44;border-radius:6px;background:${inf.bg};margin-bottom:6px;">
+      ${subHeader}${subItems}
+      <button class="btn-agregar" style="border-color:${inf.color}55;color:${inf.color};margin-top:4px;font-size:11px;" onclick="agregarSubLab('${sigla}','${k}','${inf.label.split(' ')[0]}')">+ Agregar</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="sec-bloque" style="border:1px solid ${color}33;background:${colorBg};margin-bottom:8px;">
+    <div class="sec-bloque-header">${headerTog}</div>
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--texto-suave)">Activa las subsecciones que apliquen:</span>
+      <span style="font-size:11px;${pesosSubOk?'color:var(--verde)':'color:var(--rojo)'}">
+        ${pesosSubOk?'✓ Pesos subsecciones OK':'⚠ Pesos subsecciones suman '+pesoSubTotal.toFixed(0)+'%'}</span>
+    </div>
+    ${subSecsHTML}
+  </div>`;
+}
+
+function renderGlobal(sigla, c) {
+  const g=c.global;
+  const pg=parseFloat(g.pesoGlobal)||40;
+  const pr=parseFloat(g.pesoRamo)||60;
+  const ng=parseFloat(g.nota);
+  const promR=getPromSeccionesCompleto(sigla);
+  const pesosOkG=Math.abs(pg+pr-100)<0.1;
+
+  let preview='';
+  if (g.activa&&!isNaN(ng)&&promR!==null) {
+    const nf=(ng*pg+promR*pr)/(pg+pr);
+    preview=`<span class="nc-pill ${nf>=NOTA_MIN?'nc-ap':'nc-rp'}" style="font-size:12px;padding:4px 10px;">→ Nota final: ${nf.toFixed(2)} ${nf>=NOTA_MIN?'✓':'✗'}</span>`;
+  }
+
+  return `<div class="global-bloque">
+    <div class="global-header">
+      <button class="toggle-btn" style="background:${g.activa?'#D97706':'var(--gris-borde)'}" onclick="toggleGlobal('${sigla}')">
+        <span style="${g.activa?'right:2px':'left:2px'}"></span></button>
+      <span style="font-size:13px;font-weight:600;color:${g.activa?'#B45309':'var(--texto-suave)'}">🎯 Certamen Global</span>
+      ${!g.activa?'<span style="font-size:11px;color:var(--texto-suave)">(desactivado)</span>':''}
+      ${g.activa&&promR!==null?`<span style="font-size:12px;color:#92400E;margin-left:auto">Prom. ramo: <strong>${promR.toFixed(1)}</strong></span>`:''}
+    </div>
+    ${g.activa?`
+    <div class="global-inputs">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:12px;color:var(--texto-suave)">Nota global:</span>
+        <input type="number" min="0" max="100" step="0.5" class="global-nota-input" value="${g.nota}" placeholder="—"
+          style="border:1px solid ${!isNaN(ng)?(ng>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'#D97706'};color:${!isNaN(ng)?(ng>=NOTA_MIN?'var(--verde)':'var(--rojo)'):'var(--texto)'};"
+          onchange="setGlobalNota('${sigla}',this.value)"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--texto-suave);">
+        Peso global: <input type="number" min="0" max="100" class="peso-input" value="${pg}" onchange="setGlobalPeso('${sigla}','pesoGlobal',this.value)"/>%
+        &nbsp;+&nbsp; Peso ramo: <input type="number" min="0" max="100" class="peso-input" value="${pr}" onchange="setGlobalPeso('${sigla}','pesoRamo',this.value)"/>%
+        <span style="${pesosOkG?'color:var(--verde)':'color:var(--rojo)'}">${pesosOkG?'✓':'⚠ suma '+(pg+pr).toFixed(0)+'%'}</span>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#92400E;">Nota S/G: ${promR!==null?promR.toFixed(1):'—'}</span>
+      ${preview}
+    </div>`:''}</div>`;
+}
+
+// ─── RESUMEN ──────────────────────────────────
+
+function renderResumen() {
+  const semestresOrdenados = [...miSemestres].sort((a,b)=>a.numero-b.numero);
+  const filas=semestresOrdenados.map(s=>{
+    const ss=semStats(s);
+    const pct=ss.total>0?(ss.ap/ss.total)*100:0;
+    const promStr=ss.prom!==null?ss.prom.toFixed(2):'—';
+    const fillCls=pct===100?'prog-verde':pct>0?'prog-amarillo':'prog-rojo';
+    const promCls=ss.prom===null?'':ss.prom>=70?'color:#0F6E56;font-weight:600':ss.prom>=NOTA_MIN?'color:#BA7517;font-weight:600':'color:#A32D2D;font-weight:600';
+    return `<div class="resumen-row">
+      <span style="font-size:13px;font-weight:500">Semestre ${s.numero}</span>
+      <div><div class="prog-bar"><div class="prog-fill ${fillCls}" style="width:${pct}%"></div></div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${ss.ap}/${ss.total} aprobados${ss.total===0?' (vacío)':''}</div></div>
+      <span style="font-size:14px;text-align:center;${promCls}">${promStr}</span>
+      <div style="text-align:right">${ss.rp>0?`<span class="pill pill-rojo" style="font-size:11px">${ss.rp} RP</span>`:''}</div>
+      <button class="btn-ver" onclick="setTab('sem${s.numero}')">Ver →</button></div>`;
+  }).join('');
+  return `
+    <div class="tabla-card" style="padding:0 16px">${filas || '<div style="padding:20px;text-align:center;color:var(--texto-suave);font-size:13px;">Aún no tienes semestres con ramos.</div>'}</div>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="agregarSemestre()" style="font-size:13px;padding:7px 16px;border:1px solid var(--verde);border-radius:var(--radio);background:var(--blanco);color:var(--verde);cursor:pointer;font-weight:500;">
+        + Agregar nuevo semestre
+      </button>
+    </div>
+    <div class="info-box">
+      <h4>Reglamento académico USM — puntos clave</h4>
+      <ul>
+        <li>Nota mínima de aprobación: <strong>54,5</strong> en escala 0–100</li>
+        <li>No hay redondeo automático (54,4 ≠ 54,5 salvo decisión del docente)</li>
+        <li>Riesgo académico si PGA &lt; 54,5 por dos semestres consecutivos</li>
+        <li>Riesgo académico si repruebas más del 50% de la carga inscrita</li>
+        <li>Nota S/G = promedio sin certamen global · Nota C/G = nota final con global</li>
+        <li>Campus Casa Central Valparaíso · Régimen diurno</li>
+      </ul>
+    </div>`;
+}
+
+// ─── ACCIONES ────────────────────────────────
+
+function setTab(id){tabActual=id;renderTabs();renderContent();guardarDatos();}
+function setNotaDirecta(sigla,val){config[sigla].notaSimple=val;renderStats();renderContent();}
+function toggleExpandir(sigla){
+  expandidos[sigla]=!expandidos[sigla];
+  if(expandidos[sigla]&&config[sigla].modo==='simple') config[sigla].modo='secciones';
+  renderContent();
+  guardarDatos();
+}
+function setModo(sigla,modo){config[sigla].modo=modo;renderStats();renderContent();}
+function toggleSec(sigla,key){config[sigla].secciones[key].activa=!config[sigla].secciones[key].activa;renderStats();renderContent();}
+function setPeso(sigla,key,val){config[sigla].secciones[key].peso=parseFloat(val)||0;renderStats();renderContent();}
+function setDescartar(sigla,key,val){config[sigla].secciones[key].descartar=parseInt(val)||0;renderStats();renderContent();}
+function agregarItem(sigla,key,prefijo){
+  const n=config[sigla].secciones[key].items.length+1;
+  config[sigla].secciones[key].items.push({nombre:`${prefijo} ${n}`,nota:''});
+  renderContent();
+  guardarDatos();
+}
+function quitarItem(sigla,key,idx){config[sigla].secciones[key].items.splice(idx,1);renderStats();renderContent();}
+function updItem(sigla,key,idx,campo,val){config[sigla].secciones[key].items[idx][campo]=val;renderStats();renderContent();}
+function toggleSubLab(sigla,k){config[sigla].secciones.laboratorio.subsecciones[k].activa=!config[sigla].secciones.laboratorio.subsecciones[k].activa;renderStats();renderContent();}
+function setPesoSub(sigla,k,val){config[sigla].secciones.laboratorio.subsecciones[k].pesoSub=parseFloat(val)||0;renderStats();renderContent();}
+function agregarSubLab(sigla,k,prefijo){
+  const n=config[sigla].secciones.laboratorio.subsecciones[k].items.length+1;
+  config[sigla].secciones.laboratorio.subsecciones[k].items.push({nombre:`${prefijo} ${n}`,nota:''});
+  renderContent();
+  guardarDatos();
+}
+function quitarSubLab(sigla,k,idx){config[sigla].secciones.laboratorio.subsecciones[k].items.splice(idx,1);renderStats();renderContent();}
+function updSubLab(sigla,k,idx,campo,val){config[sigla].secciones.laboratorio.subsecciones[k].items[idx][campo]=val;renderStats();renderContent();}
+function toggleGlobal(sigla){config[sigla].global.activa=!config[sigla].global.activa;renderStats();renderContent();}
+function setGlobalNota(sigla,val){config[sigla].global.nota=val;renderStats();renderContent();}
+function setGlobalPeso(sigla,campo,val){config[sigla].global[campo]=parseFloat(val)||0;renderStats();renderContent();}
+
+// ─── INIT ─────────────────────────────────────
+cargarDatosGuardados();
+renderStats(); renderTabs(); renderContent();
+</script>
+</body>
+</html>
